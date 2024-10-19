@@ -1,7 +1,5 @@
 package queue
 
-import "fmt"
-
 type Node struct {
 	next *Node
 	val  int
@@ -24,17 +22,16 @@ func (q *Queue) Add(val int) {
 }
 
 func (q *Queue) Pop() int {
-	val := q.head.val
+	prevNode := q.head
 	q.head = q.head.next
-	q.head.next = nil
-	return val
+	prevNode.next = nil
+	return prevNode.val
 }
 
 func (q *Queue) IsExist(val int) bool {
 	n := q.head
 	for ; n != nil; n = n.next {
 		if n.val == val {
-			fmt.Println(n.val)
 			return true
 		}
 	}
