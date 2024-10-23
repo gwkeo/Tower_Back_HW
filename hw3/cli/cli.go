@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/gwkeo/hw3/uniq"
+	"github.com/gwkeo/Tower_Back_HW/hw3/uniq"
 	"os"
 	"strings"
 )
@@ -35,6 +35,7 @@ func GetContent(args []string) ([]string, string, error) {
 	var content []string
 	var exportPath string
 	var err error
+
 	switch len(args) {
 	case 0:
 		content, err = GetInput()
@@ -56,7 +57,7 @@ func GetContent(args []string) ([]string, string, error) {
 	return content, exportPath, nil
 }
 
-func GetAttributes() ([]uniq.AttributesFunc, error) {
+func ParseFlags() ([]string, *uniq.Attributes, error) {
 	countSameLines := flag.Bool("c", false, "вывести число повторений строки в ее начале")
 	returnOnlySameLines := flag.Bool("d", false, "вывести только повторяющиеся строки")
 	returnOnlyUniqueLines := flag.Bool("u", false, "вывести только уникальные строки")
@@ -68,51 +69,53 @@ func GetAttributes() ([]uniq.AttributesFunc, error) {
 
 	flag.Parse()
 
-	if *countSameLines && (*returnOnlySameLines || *returnOnlyUniqueLines) {
-		err := fmt.Errorf("можно передать лишь один из трех параметров: [-c | -d | -u]")
-		flag.Usage()
-		return nil, err
-	}
-
 	content, exportPath, err := GetContent(args)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	type optionConditions struct {
-		isFlagUsed bool
-		option     uniq.AttributesFunc
+	attributes := &uniq.Attributes{
+		ExportPath:            exportPath,
+		CountSameLines:        *countSameLines,
+		ReturnOnlySameLines:   *returnOnlySameLines,
+		ReturnOnlyUniqueLines: *returnOnlyUniqueLines,
+		NumberOfFieldsToSkip:  *numberOfFieldsToSkip,
+		NumberOfCharsToSkip:   *numberOfCharsToSkip,
+		IgnoreCase:            *ignoreCase,
 	}
 
-	optionsList := []optionConditions{
-		{true, uniq.PasteContent(content)},
-		{exportPath == "", uniq.WithExportPath(exportPath)},
-		{*countSameLines, uniq.WithCountSameLines()},
-		{*returnOnlySameLines, uniq.WithReturnOnlySameLines()},
-		{*returnOnlyUniqueLines, uniq.WithReturnOnlyUniqueLines()},
-		{*numberOfFieldsToSkip > 0, uniq.WithNumberOfFieldsToSkip(*numberOfFieldsToSkip)},
-		{*numberOfCharsToSkip > 0, uniq.WithNumberOfCharsToSkip(*numberOfCharsToSkip)},
-		{*ignoreCase, uniq.WithIgnoreCase()},
+	return content, attributes, nil
+}
+
+func CheckFlagConflicts(attributes *uniq.Attributes) error {
+	if attributes.CountSameLines && (attributes.ReturnOnlySameLines || attributes.ReturnOnlyUniqueLines) {
+		err := fmt.Errorf("можно передать лишь один из трех параметров: [-c | -d | -u]")
+		flag.Usage()
+		return err
+	}
+	return nil
+}
+
+func GetAttributes() ([]string, *uniq.Attributes, error) {
+	content, attributes, err := ParseFlags()
+	if err != nil {
+		return nil, nil, err
 	}
 
-	var options []uniq.AttributesFunc
-
-	for _, option := range optionsList {
-		if option.isFlagUsed {
-			options = append(options, option.option)
-		}
+	if flagConflictsErr := CheckFlagConflicts(attributes); flagConflictsErr != nil {
+		return nil, nil, flagConflictsErr
 	}
 
-	return options, nil
+	return content, attributes, nil
 }
 
 func Run() error {
-	options, err := GetAttributes()
+	content, options, err := GetAttributes()
 	if err != nil {
 		return err
 	}
 
-	uniqResult, uniqErr := uniq.Uniq(options...)
+	uniqResult, uniqErr := uniq.Uniq(content, options)
 
 	if uniqErr != nil {
 		return uniqErr

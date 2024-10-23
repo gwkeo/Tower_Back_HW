@@ -2,10 +2,15 @@ package uniq
 
 import (
 	"fmt"
+	"strings"
 )
 
+type StringCountPair struct {
+	str   string
+	count int
+}
+
 type Attributes struct {
-	Content               []string
 	ExportPath            string
 	CountSameLines        bool // -c
 	ReturnOnlySameLines   bool // -d
@@ -15,69 +20,67 @@ type Attributes struct {
 	IgnoreCase            bool // -i
 }
 
-type AttributesFunc func(attributes *Attributes)
-
-func PasteContent(content []string) AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.Content = content
+func SkipFieldsOfLine(line string, numFields int) string {
+	result := strings.Split(line, " ")
+	if numFields > len(result) {
+		return ""
 	}
+	result = result[numFields:]
+	return strings.Join(result, " ")
 }
 
-func WithExportPath(exportPath string) AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.ExportPath = exportPath
+func SkipCharsOfLine(line string, numChars int) string {
+	if numChars > len(line) {
+		return ""
 	}
+	return line[numChars:]
 }
 
-func WithCountSameLines() AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.CountSameLines = true
-	}
-}
+func Uniq(content []string, attributes *Attributes) (string, error) {
 
-func WithReturnOnlySameLines() AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.ReturnOnlySameLines = true
-	}
-}
-
-func WithReturnOnlyUniqueLines() AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.ReturnOnlyUniqueLines = true
-	}
-}
-
-func WithNumberOfFieldsToSkip(numberOfFieldToSkip int) AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.NumberOfFieldsToSkip = numberOfFieldToSkip
-	}
-}
-
-func WithNumberOfCharsToSkip(numberOfFieldToSkip int) AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.NumberOfCharsToSkip = numberOfFieldToSkip
-	}
-}
-
-func WithIgnoreCase() AttributesFunc {
-	return func(attributes *Attributes) {
-		attributes.IgnoreCase = true
-	}
-}
-
-func Uniq(attributesFunc ...AttributesFunc) (string, error) {
-	attributes := &Attributes{}
-	for _, fn := range attributesFunc {
-		fn(attributes)
+	type StrCountPair struct {
+		Count int
+		Str   string
 	}
 
-	result, ok := GetUniq(attributes)
-	if ok != nil {
-		return "", fmt.Errorf("GetUniq failed with %v", ok)
+	var strCountPairs []StrCountPair
+	var index int
+	k := 1
+	for i := 0; i < len(content)-1; i++ {
+		currentLine := content[i]
+		nextLine := content[i+1]
+
+		if attributes.NumberOfCharsToSkip > 0 &&
+			attributes.NumberOfCharsToSkip < len(currentLine) &&
+			attributes.NumberOfCharsToSkip < len(nextLine) {
+			currentLine = currentLine[attributes.NumberOfCharsToSkip:]
+			nextLine = currentLine[attributes.NumberOfCharsToSkip:]
+		}
+
+		if currentLine == nextLine {
+			if k == 1 {
+				index = i
+			}
+			k++
+		} else {
+			strCountPairs = append(strCountPairs, StrCountPair{
+				Count: k,
+				Str:   content[index],
+			})
+			k = 1
+		}
 	}
+
+	result := ""
+	for _, str := range strCountPairs {
+		result += fmt.Sprintln(str.Count, str.Str)
+	}
+
 	return result, nil
 }
 
-func GetUniq(attributes *Attributes) (string, error) {
-	return "", nil
-}
+/*
+
+attr = 0 =>
+
+*/
