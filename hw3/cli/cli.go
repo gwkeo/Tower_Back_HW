@@ -61,8 +61,8 @@ func ParseFlags() ([]string, *uniq.Attributes, error) {
 	countSameLines := flag.Bool("c", false, "вывести число повторений строки в ее начале")
 	returnOnlySameLines := flag.Bool("d", false, "вывести только повторяющиеся строки")
 	returnOnlyUniqueLines := flag.Bool("u", false, "вывести только уникальные строки")
-	numberOfFieldsToSkip := flag.Int("f", 1, "не учитывать n полей в строке")
-	numberOfCharsToSkip := flag.Int("s", 1, "не учитывать n строк")
+	numberOfFieldsToSkip := flag.Int("f", 0, "не учитывать n полей в строке")
+	numberOfCharsToSkip := flag.Int("s", 0, "не учитывать n символов")
 	ignoreCase := flag.Bool("i", false, "не учитывать регистр строк")
 
 	args := flag.Args()
@@ -107,20 +107,4 @@ func GetAttributes() ([]string, *uniq.Attributes, error) {
 	}
 
 	return content, attributes, nil
-}
-
-func Run() error {
-	content, options, err := GetAttributes()
-	if err != nil {
-		return err
-	}
-
-	uniqResult, uniqErr := uniq.Uniq(content, options)
-
-	if uniqErr != nil {
-		return uniqErr
-	}
-
-	fmt.Println(uniqResult)
-	return nil
 }
