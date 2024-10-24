@@ -52,6 +52,22 @@ func ModifyLine(line string, attributes *Attributes) string {
 	return line
 }
 
+func ConvertStrConvToString(strCount *[]StrCount, attributes *Attributes) string {
+	result := ""
+	for _, elem := range *strCount {
+		if attributes.ReturnOnlySameLines && elem.count > 1 {
+			result += elem.str + "\n"
+		} else if attributes.ReturnOnlyUniqueLines && elem.count == 1 {
+			result += elem.str + "\n"
+		} else if attributes.CountSameLines {
+			result += strconv.Itoa(elem.count) + " " + elem.str + "\n"
+		} else {
+			result += elem.str + "\n"
+		}
+	}
+	return result
+}
+
 func Uniq(content []string, attributes *Attributes) (string, error) {
 
 	var strCount []StrCount
@@ -75,18 +91,7 @@ func Uniq(content []string, attributes *Attributes) (string, error) {
 		}
 	}
 
-	result := ""
-	for _, elem := range strCount {
-		if attributes.ReturnOnlySameLines && elem.count > 1 {
-			result += elem.str + "\n"
-		} else if attributes.ReturnOnlyUniqueLines && elem.count == 1 {
-			result += elem.str + "\n"
-		} else if attributes.CountSameLines {
-			result += strconv.Itoa(elem.count) + " " + elem.str + "\n"
-		} else {
-			result += elem.str + "\n"
-		}
-	}
+	result := ConvertStrConvToString(&strCount, attributes)
 
 	return result, nil
 }
