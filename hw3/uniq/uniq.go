@@ -61,7 +61,7 @@ func ConvertStrConvToString(strCount *[]StrCount, attributes *Attributes) string
 			result += elem.str + "\n"
 		} else if attributes.CountSameLines {
 			result += strconv.Itoa(elem.count) + " " + elem.str + "\n"
-		} else {
+		} else if !(attributes.CountSameLines || attributes.ReturnOnlyUniqueLines || attributes.ReturnOnlySameLines) {
 			result += elem.str + "\n"
 		}
 	}
