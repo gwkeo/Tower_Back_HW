@@ -87,5 +87,6 @@ func Uniq(content []string, attributes *Attributes) (string, error) {
 			result += elem.str + "\n"
 		}
 	}
+
 	return result, nil
 }

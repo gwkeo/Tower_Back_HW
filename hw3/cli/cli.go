@@ -31,30 +31,30 @@ func GetFileContent(path string) ([]string, error) {
 	return strings.Split(string(result), "\n"), nil
 }
 
-func GetContent(args []string) ([]string, string, error) {
+func GetContent(args []string) ([]string, error) {
 	var content []string
-	var exportPath string
 	var err error
 
-	switch len(args) {
-	case 0:
+	if len(args) < 1 {
 		content, err = GetInput()
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-	case 1:
+	} else {
 		content, err = GetFileContent(args[0])
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-	case 2:
-		content, err = GetFileContent(args[0])
-		if err != nil {
-			return nil, "", err
-		}
-		exportPath = args[1]
 	}
-	return content, exportPath, nil
+	return content, nil
+}
+
+func GetPath(args []string) string {
+	if len(args) < 2 {
+		return ""
+	} else {
+		return args[1]
+	}
 }
 
 func ParseFlags() ([]string, *uniq.Attributes, error) {
@@ -65,14 +65,16 @@ func ParseFlags() ([]string, *uniq.Attributes, error) {
 	numberOfCharsToSkip := flag.Int("s", 0, "не учитывать n символов")
 	ignoreCase := flag.Bool("i", false, "не учитывать регистр строк")
 
-	args := flag.Args()
-
 	flag.Parse()
 
-	content, exportPath, err := GetContent(args)
-	if err != nil {
-		return nil, nil, err
+	args := flag.Args()
+
+	content, contentErr := GetContent(args)
+	if contentErr != nil {
+		return nil, nil, contentErr
 	}
+
+	exportPath := GetPath(args)
 
 	attributes := &uniq.Attributes{
 		ExportPath:            exportPath,
@@ -107,4 +109,12 @@ func GetAttributes() ([]string, *uniq.Attributes, error) {
 	}
 
 	return content, attributes, nil
+}
+
+func WriteToFile(content string, path string) error {
+	ok := os.WriteFile(path, []byte(content), 0644)
+	if ok != nil {
+		return fmt.Errorf("unable to write to file: %s", ok)
+	}
+	return nil
 }

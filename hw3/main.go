@@ -17,4 +17,9 @@ func main() {
 		log.Fatal(ok)
 	}
 	fmt.Println(result)
+	if attributes.ExportPath != "" {
+		if writeErr := cli.WriteToFile(result, attributes.ExportPath); writeErr != nil {
+			log.Fatal(writeErr)
+		}
+	}
 }
