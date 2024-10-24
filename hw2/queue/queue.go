@@ -12,7 +12,7 @@ type Queue struct {
 
 func (q *Queue) Add(val int) {
 	newNode := &Node{val: val}
-	if q.head == nil {
+	if q.QueueIsExist() {
 		q.head = newNode
 		q.tail = newNode
 	} else {
@@ -36,4 +36,11 @@ func (q *Queue) IsExist(val int) bool {
 		}
 	}
 	return false
+}
+
+func (q *Queue) QueueIsExist() bool {
+	if q.head == nil {
+		return false
+	}
+	return true
 }
