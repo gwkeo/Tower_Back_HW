@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
+	"github.com/gwkeo/Tower_Back_HW/hw3/cli"
 	"github.com/gwkeo/Tower_Back_HW/hw3/uniq"
+	"log"
 )
 
 func main() {
-	var str []string
-	str = append(str, "cake")
-	str = append(str, "cake")
-	str = append(str, "bake")
-	str = append(str, "")
-	str = append(str, "cake")
-	attributes := &uniq.Attributes{
-		ReturnOnlyUniqueLines: true,
-		NumberOfCharsToSkip:   1,
+	content, attributes, err := cli.GetAttributes()
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Println(uniq.Uniq(str, attributes))
+	result, ok := uniq.Uniq(content, attributes)
+	if ok != nil {
+		log.Fatal(ok)
+	}
+	fmt.Println(result)
 }

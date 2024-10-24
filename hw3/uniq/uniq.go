@@ -1,13 +1,14 @@
 package uniq
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 )
 
-type StringCountPair struct {
-	str   string
-	count int
+type StrCount struct {
+	count       int
+	str         string
+	modifiedStr string
 }
 
 type Attributes struct {
@@ -20,67 +21,71 @@ type Attributes struct {
 	IgnoreCase            bool // -i
 }
 
-func SkipFieldsOfLine(line string, numFields int) string {
-	result := strings.Split(line, " ")
-	if numFields > len(result) {
-		return ""
+func SkipFields(line *string, num int) {
+	fields := strings.Split(*line, " ")
+	if len(fields) < num {
+		*line = ""
+	} else {
+		fields = fields[num:]
+		*line = strings.Join(fields, " ")
 	}
-	result = result[numFields:]
-	return strings.Join(result, " ")
 }
 
-func SkipCharsOfLine(line string, numChars int) string {
-	if numChars > len(line) {
-		return ""
+func SkipChars(line *string, num int) {
+	if len(*line) < num {
+		*line = ""
+	} else {
+		*line = (*line)[num:]
 	}
-	return line[numChars:]
+}
+
+func ModifyLine(line string, attributes *Attributes) string {
+	if attributes.NumberOfFieldsToSkip > 0 {
+		SkipFields(&line, attributes.NumberOfFieldsToSkip)
+	}
+	if attributes.NumberOfCharsToSkip > 0 {
+		SkipChars(&line, attributes.NumberOfCharsToSkip)
+	}
+	if attributes.IgnoreCase {
+		line = strings.ToLower(line)
+	}
+	return line
 }
 
 func Uniq(content []string, attributes *Attributes) (string, error) {
 
-	type StrCountPair struct {
-		Count int
-		Str   string
-	}
+	var strCount []StrCount
+	strCount = append(strCount, StrCount{
+		1,
+		content[0],
+		ModifyLine(content[0], attributes),
+	})
 
-	var strCountPairs []StrCountPair
-	var index int
-	k := 1
-	for i := 0; i < len(content)-1; i++ {
-		currentLine := content[i]
-		nextLine := content[i+1]
-
-		if attributes.NumberOfCharsToSkip > 0 &&
-			attributes.NumberOfCharsToSkip < len(currentLine) &&
-			attributes.NumberOfCharsToSkip < len(nextLine) {
-			currentLine = currentLine[attributes.NumberOfCharsToSkip:]
-			nextLine = currentLine[attributes.NumberOfCharsToSkip:]
-		}
-
-		if currentLine == nextLine {
-			if k == 1 {
-				index = i
-			}
-			k++
+	for i, j := 1, 0; i < len(content); i++ {
+		line := ModifyLine(content[i], attributes)
+		if strCount[j].modifiedStr == line {
+			strCount[j].count++
 		} else {
-			strCountPairs = append(strCountPairs, StrCountPair{
-				Count: k,
-				Str:   content[index],
+			strCount = append(strCount, StrCount{
+				1,
+				content[i],
+				line,
 			})
-			k = 1
+			j++
 		}
 	}
 
 	result := ""
-	for _, str := range strCountPairs {
-		result += fmt.Sprintln(str.Count, str.Str)
+	for _, elem := range strCount {
+		if attributes.ReturnOnlySameLines && elem.count > 1 {
+			result += elem.str + "\n"
+		} else if attributes.ReturnOnlyUniqueLines && elem.count == 1 {
+			result += elem.str + "\n"
+		} else if attributes.CountSameLines {
+			result += strconv.Itoa(elem.count) + " " + elem.str + "\n"
+		} else {
+			result += elem.str + "\n"
+		}
 	}
-
 	return result, nil
 }
-
-/*
-
-attr = 0 =>
-
-*/
