@@ -27,8 +27,8 @@ func TestUniq(t *testing.T) {
 	}{
 		{"Same 3 lines with no flags", threeSameLines, defaultFlags, "cake\n"},
 		{"Different 3 lines with no flags", differentFirstChar, defaultFlags, "cake\nbake\ntake\n"},
-		{"3 lines with different first chars with differentFirstChar flag", differentFirstChar, skipCharFlag, "cake\n"},
-		{"3 lines with different first fields with differentFirstField flag", differentFirstField, skipFieldFlag, "I met\n"},
+		{"3 lines with different first chars with skipChar flag", differentFirstChar, skipCharFlag, "cake\n"},
+		{"3 lines with different first fields with skipField flag", differentFirstField, skipFieldFlag, "I met\n"},
 		{"3 lines with random case with ignoreCase flag", differentCase, ignoreCaseFlag, "cAke\n"},
 		{"3 lines with two same and one unique with countSame flag", sameAndUniqueLines, countSameFlag, "2 cake\n1 bake\n"},
 		{"3 lines with two same and one unique with sameOnly flag", sameAndUniqueLines, sameOnlyFlag, "cake\n"},
