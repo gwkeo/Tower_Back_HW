@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
+)
+
+const (
+	workersNum      = 3
+	jobsArrangement = 100
 )
 
 func worker(id int, jobs <-chan int, results chan<- int) {
@@ -13,34 +19,41 @@ func worker(id int, jobs <-chan int, results chan<- int) {
 		fmt.Println("worker", id, "started job", j)
 		time.Sleep(time.Second)
 		fmt.Println("worker", id, "finished job", j)
-		results <- j * 2
-	}
-}
-
-func generator(jobs chan int) {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	defer os.Exit(1)
-	for i := 0; ; i++ {
-		select {
-		case <-signals:
-			fmt.Println("Got SIGINT/SIGTERM")
-			close(jobs)
-			return
-		default:
-			jobs <- i
-		}
+		results <- j
 	}
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	jobs := make(chan int)
 	results := make(chan int)
-	for w := 1; w <= 3; w++ {
-		go worker(w, jobs, results)
-	}
-	go generator(jobs)
-	for a := 1; ; a++ {
-		<-results
-	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("context canceled")
+				return
+			default:
+				jobs <- rand.Intn(jobsArrangement)
+			}
+		}
+	}()
+
+	go func() {
+		for i := 0; i < workersNum; i++ {
+			select {
+			case <-c:
+				cancel()
+			default:
+				go worker(i, jobs, results)
+			}
+		}
+	}()
+	time.Sleep(time.Second)
 }
