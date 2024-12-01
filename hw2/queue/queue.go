@@ -1,18 +1,18 @@
 package queue
 
-type Node[T comparable] struct {
-	next *Node[T]
-	val  T
+type Node struct {
+	next *Node
+	val  int
 }
 
-type Queue[T comparable] struct {
-	head *Node[T]
-	tail *Node[T]
+type Queue struct {
+	head *Node
+	tail *Node
 }
 
-func (q *Queue[T]) Add(val T) {
-	newNode := &Node[T]{val: val}
-	if q.head == nil {
+func (q *Queue) Add(val int) {
+	newNode := &Node{val: val}
+	if q.QueueIsExist() {
 		q.head = newNode
 		q.tail = newNode
 	} else {
@@ -21,20 +21,26 @@ func (q *Queue[T]) Add(val T) {
 	}
 }
 
-func (q *Queue[T]) Pop() T {
-	currHead := q.head
+func (q *Queue) Pop() int {
+	prevNode := q.head
 	q.head = q.head.next
-	currHead.next = nil
-	return currHead.val
+	prevNode.next = nil
+	return prevNode.val
 }
 
-func (q *Queue[T]) IsExist(val T) bool {
-	if q.head != nil {
-		for curr := q.head; curr != nil; curr = curr.next {
-			if curr.val == val {
-				return true
-			}
+func (q *Queue) IsExist(val int) bool {
+	n := q.head
+	for ; n != nil; n = n.next {
+		if n.val == val {
+			return true
 		}
 	}
 	return false
+}
+
+func (q *Queue) QueueIsExist() bool {
+	if q.head == nil {
+		return false
+	}
+	return true
 }
